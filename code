@@ -1,1 +1,212 @@
+#include <iostream>
+#include <string>
+#include <fstream>
+using namespace std;
 
+class person {
+protected:
+    string name;
+    int age;
+public:
+    person(string n, int a) : name(n), age(a) {}
+    string get_name() {
+        return name;
+    }
+    void display() {
+        cout << "Name: " << name << endl << "Age: " << age << endl;
+    }
+};
+
+class baggage {
+protected:
+    int weight;
+public:
+    baggage(int w) : weight(w) {}
+    int get_weight() {
+        return weight;
+    }
+};
+
+class employee : virtual public person {
+protected:
+    int emp_id;
+    string role;
+public:
+    employee(string n, int a, int id, string r) : person(n, a), emp_id(id), role(r) {}
+    void display() {
+        person::display();
+        cout << "Employee ID: " << emp_id << endl << "Role: " << role << endl;
+    }
+};
+
+class crew : virtual public person, public employee {
+public:
+    crew(string n, int a, int id, string r) : person(n, a), employee(n, a, id, r) {}
+    void display() {
+        person::display();
+        employee::display();
+    }
+
+    void displayToFile(ofstream& outputFile) {
+        outputFile << "Crew Member Details:" << endl;
+        outputFile << "Name: " << name << endl << "Age: " << age << endl;
+        outputFile << "Employee ID: " << emp_id << endl << "Role: " << role << endl;
+    }
+};
+
+
+class pas : virtual public person {
+public:
+    int pass_id;
+    baggage b;
+
+public:
+    pas(string n, int a, int id, int bag_weight) : person(n, a), pass_id(id), b(bag_weight) {}
+    void display() {
+        person::display();
+        cout << "Passenger ID: " << pass_id << endl;
+        cout << "Baggage Weight: " << b.get_weight() << " kg" << endl;
+    }
+};
+
+class flight {
+public:
+    string flight_num;
+    string dest;
+    int capacity;
+    int num_passengers;
+    int maxbw;
+    string wc;
+
+public:
+    flight(string num, string d, int cap, int maxbw)
+        : flight_num(num), dest(d), capacity(cap), num_passengers(0), maxbw(maxbw), wc("Clear") {}
+
+    bool book(pas& pass) {
+        if (num_passengers < capacity && (pass.b.get_weight() <= maxbw)) {
+            num_passengers++;
+            cout << "Ticket booked for passenger: " << pass.get_name() << endl;
+            return true;
+        }
+        else {
+            cout << "Flight is full or baggage limit exceeded. Ticket booking failed for passenger: " << pass.get_name() << endl;
+            return false;
+        }
+    }
+
+    void display() {
+        cout << "Flight Number: " << flight_num << endl << "Destination: " << dest << endl << "Capacity: " << capacity << endl << "Passengers: " << num_passengers << endl;
+        cout << "Weather Conditions: " << wc << endl;
+    }
+};
+
+class nf : public flight {
+private:
+    string dep;
+    string arr;
+
+public:
+    nf(string num, string d, int cap, string dep_country, string arr_country)
+        : flight(num, d, cap, 20), dep(dep_country), arr(arr_country) {}
+
+    void display() {
+        flight::display();
+        cout << "Departure City: " << dep << endl << "Arrival City: " << arr << endl;
+    }
+
+    void displayToFile(ofstream& outputFile) {
+        outputFile << "National Flight Details:" << endl;
+        outputFile << "Flight Number: " << flight_num << endl << "Destination: " << dest << endl << "Capacity: " << capacity << endl << "Passengers: " << num_passengers << endl;
+        outputFile << "Departure City: " << dep << endl << "Arrival City: " << arr << endl;
+    }
+};
+
+class intf : public flight {
+private:
+    string dep;
+    string arr;
+
+public:
+    intf(string num, string d, int cap, string dep_country, string arr_country)
+        : flight(num, d, cap, 30), dep(dep_country), arr(arr_country) {}
+
+    void display() {
+        flight::display();
+        cout << "Departure Country: " << dep << endl << "Arrival Country: " << arr << endl;
+    }
+
+    void displayToFile(ofstream& outputFile) {
+        outputFile << "International Flight Details:" << endl;
+        outputFile << "Flight Number: " << flight_num << endl << "Destination: " << dest << endl << "Capacity: " << capacity << endl << "Passengers: " << num_passengers << endl;
+        outputFile << "Departure Country: " << dep << endl << "Arrival Country: " << arr << endl;
+    }
+};
+
+class security {
+public:
+    bool check(pas& pass) {
+        if (pass.get_name() == "ranjan") {
+            cout << "Security check failed for passenger: " << pass.get_name() << endl;
+            return false;
+        }
+        cout << "Security check passed for passenger: " << pass.get_name() << endl;
+        return true;
+    }
+};
+
+class booking {
+public:
+    void book_flight(flight& f, pas& p, security& s) {
+        if (f.book(p) && s.check(p)) {
+            cout << "Booking successful!" << endl;
+        }
+        else {
+            cout << "Booking failed." << endl;
+        }
+    }
+};
+
+int main() {
+    pas p1("riya", 20, 1039, 18);
+    pas p2("rajeev", 54, 1345, 25);
+    pas p3("ranjan", 30, 5678, 35);
+    crew c1("aryaman", 25, 98215, "Co-Pilot");
+    nf nf1("MH370", "Indore", 3, "Indore", "Bombay");
+    intf intf1("PAN38", "INDIA", 4, "India", "US");
+
+    booking bs;
+    security s;
+
+    bs.book_flight(nf1, p1, s);
+    bs.book_flight(intf1, p2, s);
+    bs.book_flight(nf1, p3, s);
+
+    ofstream outputFile("‪F:\flights.docx");
+
+    if (!outputFile.is_open()) {
+        cout << "Error opening output file." << endl;
+        return 1;
+    }
+
+    nf1.displayToFile(outputFile);
+    intf1.displayToFile(outputFile);
+    c1.displayToFile(outputFile);
+
+    outputFile.close();
+
+    ifstream inputFile("‪F:\flights.docx");
+
+    if (!inputFile.is_open()) {
+        cout << "Error opening input file." << endl;
+        return 1;
+    }
+
+    string line;
+    while (getline(inputFile, line)) {
+        cout << line << endl;
+    }
+
+    inputFile.close();
+
+    return 0;
+}
